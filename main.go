@@ -11,11 +11,11 @@ import (
 	"githab.com/funnyfoxd/vk_test/shortestPath"
 )
 
-func readInput() (int, int, [][]int, models.Point, models.Point, error) {
+func readInput() ([][]int, models.Point, models.Point, error) {
 	var n, m int
 	_, err := fmt.Scanf("%d %d\n", &n, &m)
 	if err != nil {
-		return 0, 0, nil, models.Point{}, models.Point{}, fmt.Errorf("failed to read input(labirinth size): %w", err)
+		return nil, models.Point{}, models.Point{}, fmt.Errorf("failed to read input(labirinth size): %w", err)
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -23,7 +23,7 @@ func readInput() (int, int, [][]int, models.Point, models.Point, error) {
 	for i := 0; i < n; i++ {
 		row, err := reader.ReadString('\n')
 		if err != nil {
-			return 0, 0, nil, models.Point{}, models.Point{}, fmt.Errorf("failed to read input(row in %d): %w", i ,err)
+			return nil, models.Point{}, models.Point{}, fmt.Errorf("failed to read input(row in %d): %w", i ,err)
 		}
 		
 		row = strings.TrimSpace(row)
@@ -33,7 +33,7 @@ func readInput() (int, int, [][]int, models.Point, models.Point, error) {
 		for j := 0; j < m; j++ {
 			labyrinth[i][j], err = strconv.Atoi(cells[j])
 			if err != nil {
-				return 0, 0, nil, models.Point{}, models.Point{}, fmt.Errorf("failed to read input(cell in %d, %d): %w", i, j, err)
+				return nil, models.Point{}, models.Point{}, fmt.Errorf("failed to read input(cell in %d, %d): %w", i, j, err)
 			}
 		}
 	}
@@ -42,7 +42,7 @@ func readInput() (int, int, [][]int, models.Point, models.Point, error) {
 	var finishX, finishY int
 	_, err = fmt.Scanf("%d %d %d %d\n", &startX, &startY, &finishX, &finishY)
 	if err != nil {
-		return 0, 0, nil, models.Point{}, models.Point{}, fmt.Errorf("failed to read input(start or finish points): %w", err)
+		return nil, models.Point{}, models.Point{}, fmt.Errorf("failed to read input(start or finish points): %w", err)
 	}
 
 	start := models.Point{
@@ -54,17 +54,17 @@ func readInput() (int, int, [][]int, models.Point, models.Point, error) {
 		Y: finishY,
 	}
 
-	return n, m, labyrinth, start, finish, nil
+	return labyrinth, start, finish, nil
 }
 
 func main() {
-	n, m, labirinth, start, finish, err := readInput()
+	labirinth, start, finish, err := readInput()
 	if err != nil {
 		fmt.Printf("error: %v", err)
 		os.Exit(1)
 	}
 
-	path, err := shortestpath.ShortestPath(n, m, labirinth, start, finish)
+	path, err := shortestpath.AStar(labirinth, start, finish)
 	if err != nil {
 		fmt.Printf("error: %v", err)
 		os.Exit(1)

@@ -3,69 +3,79 @@ package shortestpath
 import (
 	"container/heap"
 	"fmt"
+	"math"
 
 	"githab.com/funnyfoxd/vk_test/models"
-	"githab.com/funnyfoxd/vk_test/prQ"
+	"githab.com/funnyfoxd/vk_test/prq"
 )
 
 var directions = []models.Point{
 	{X: -1, Y: 0},
+	{X: 0, Y: 1},
 	{X: 1, Y: 0},
 	{X: 0, Y: -1},
-	{X: 0, Y: 1},
 }
 
-func isValidDir(x, y, n, m int) bool {
-	return x >= 0 && x < n &&
-		y >= 0 && y < m
+func heuristics(a, b models.Point) int {
+	return int(math.Abs(float64(a.X-b.X)) + math.Abs(float64(a.Y-b.Y)))
 }
 
-func ShortestPath(n, m int, labirinth [][]int, start, finish models.Point) ([]models.Point, error) {
-	pq := &prq.PriorityQueue{}
-	heap.Init(pq)
+func AStar(labyrinth [][]int, start, finish models.Point) ([]models.Point, error) {
+	closedSet := make(map[models.Point]bool)
+	openSet := &prq.PriorityQueue{}
+	heap.Init(openSet)
 
-	dist := make([][]int, n)
-	for i := 0; i < n; i++ {
-		dist[i] = make([]int, m)
-		for j := 0; j < m; j++ {
-			dist[i][j] = int(^uint(0) >> 1)
-		}
+	startNode := &models.Node{
+		Point: start,
+		GCost: 0,
+		HCost: heuristics(start, finish),
+		FCost: heuristics(start, finish),
+		Parent: nil,
 	}
-	dist[start.X][start.Y] = 0
+	
+	heap.Push(openSet, startNode)
 
-	previous := make([][]models.Point, n)
-	for i := range previous {
-		previous[i] = make([]models.Point, m)
-	}
+	for openSet.Len() > 0 {
+		currentNode := heap.Pop(openSet).(*models.Node)
+		currentPoint := currentNode.Point
 
-	heap.Push(pq, models.Point{X: start.X, Y: start.Y, Cost: 0})
-
-	for pq.Len() > 0 {
-		current := heap.Pop(pq).(models.Point)
-
-		if current.X == finish.X && current.Y == finish.Y {
-			path := []models.Point{}
-			for current.X != start.X || current.Y != start.Y {
-				path = append([]models.Point{current}, path...)
-				current = previous[current.X][current.Y]	
+		if currentPoint == finish {
+			var path []models.Point
+			for currentNode != nil {
+				path = append([]models.Point{currentNode.Point}, path...)
+				currentNode = currentNode.Parent
 			}
-			path = append([]models.Point{start}, path...)
 
 			return path, nil
 		}
 
-		for _, dir := range directions {
-			nextX, nextY := current.X + dir.X, current.Y + dir.Y
-			if isValidDir(nextX, nextY, n, m) && labirinth[nextX][nextY] != 0 {
-				newCost := current.Cost + labirinth[nextX][nextY]
-				if newCost < dist[nextX][nextY] {
-					dist[nextX][nextY] = newCost
-					previous[nextX][nextY] = current
-					heap.Push(pq, models.Point{X: nextX, Y: nextY, Cost: newCost})
-				}
+		closedSet[currentPoint] = true
+
+		for _, dirrection := range directions {
+			neighbor := models.Point{
+				X: currentPoint.X + dirrection.X,
+				Y: currentPoint.Y + dirrection.Y,
 			}
+
+			if !neighbor.IsValid(labyrinth) || closedSet[neighbor] {
+				continue
+			}
+
+			gCost := currentNode.GCost + labyrinth[neighbor.X][neighbor.Y]
+			hCost := heuristics(neighbor, finish)
+			fCost := gCost + hCost
+
+			neighborNode := &models.Node{
+				Point: neighbor,
+				GCost: gCost,
+				HCost: hCost,
+				FCost: fCost,
+				Parent: currentNode,
+			}
+
+			heap.Push(openSet, neighborNode)
 		}
 	}
 
-	return nil, fmt.Errorf("no path in labirinth")
+	return nil, fmt.Errorf("no path found")
 }
