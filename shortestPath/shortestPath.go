@@ -16,10 +16,30 @@ var directions = []models.Point{
 	{X: 0, Y: -1},
 }
 
+// heuristics calculates the heuristic cost between two points using the Manhattan
+// distance.
+//
+// It is used in the A* algorithm to guide the search towards the finish point.
+//
+// It returns the heuristic cost as an integer.
 func heuristics(a, b models.Point) int {
 	return int(math.Abs(float64(a.X-b.X)) + math.Abs(float64(a.Y-b.Y)))
 }
 
+// AStar implements the A* algorithm to find the shortest path from start to finish
+// points in the given labyrinth.
+//
+// It returns the shortest path as a slice of models.Point and an error if there is
+// no path.
+//
+// The input labyrinth is represented as a 2D slice of integers, where 0 represents
+// an empty cell and 1 represents a wall.
+//
+// The start and finish points are represented as two models.Point.
+//
+// The A* algorithm is guided by the Manhattan distance heuristic.
+//
+// If there is an error while finding the path, it will be returned as error.
 func AStar(labyrinth [][]int, start, finish models.Point) ([]models.Point, error) {
 	closedSet := make(map[models.Point]bool)
 	openSet := &prq.PriorityQueue{}

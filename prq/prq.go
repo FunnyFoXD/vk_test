@@ -6,6 +6,8 @@ import (
 
 type PriorityQueue []*models.Node
 
+// Implementing heap.Interface
+
 func (p PriorityQueue) Len() int {
 	return len(p)
 }
